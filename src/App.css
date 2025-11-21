@@ -1,0 +1,392 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #f3f5fb;
+}
+
+.app {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2.1rem;
+  color: #102947;
+  letter-spacing: 0.03em;
+}
+
+.subtitle {
+  margin-top: 8px;
+  color: #596681;
+  font-size: 0.95rem;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.upload-panel,
+.results-panel {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 10px 30px rgba(16, 41, 71, 0.08);
+}
+
+.upload-panel h2,
+.results-panel h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  color: #102947;
+}
+
+.hint {
+  color: #6a768e;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+input[type="file"] {
+  margin-top: 8px;
+}
+
+.actions {
+  margin-top: 12px;
+}
+
+button {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  background-color: #1a73e8;
+  color: #ffffff;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.35);
+  transition: background-color 0.15s ease, transform 0.05s ease, box-shadow 0.1s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: #155ec0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(26, 115, 232, 0.45);
+}
+
+button:disabled {
+  background-color: #a4bde9;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.secondary-button {
+  background-color: #ffffff;
+  color: #1a73e8;
+  border: 1px solid #d0d8f2;
+  box-shadow: none;
+  padding-inline: 14px;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background-color: #f0f4ff;
+  box-shadow: none;
+}
+
+.status {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #1b5e31;
+  background-color: #e4f4ea;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.error {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #8b1a1a;
+  background-color: #fde5e5;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.results-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.results-table-wrapper {
+  margin-top: 6px;
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.results-table th,
+.results-table td {
+  border-bottom: 1px solid #e1e7f0;
+  padding: 7px 8px;
+  text-align: left;
+}
+
+.results-table th {
+  background-color: #f4f6fd;
+  font-weight: 600;
+  color: #102947;
+}
+
+.col-filename {
+  width: 32%;
+}
+
+.col-score-number {
+  width: 10%;
+  text-align: center;
+}
+
+.col-score-label {
+  width: 16%;
+}
+
+.col-metric {
+  width: 14%;
+}
+
+.filename-cell {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.results-note {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #6a768e;
+}
+
+/* Score styling */
+
+.score-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.score-strong {
+  background-color: #e3f3e5;
+  color: #186532;
+}
+
+.score-maybe {
+  background-color: #fff5d8;
+  color: #856105;
+}
+
+.score-weak {
+  background-color: #fde5e5;
+  color: #8b1a1a;
+}
+
+.score-number-cell {
+  text-align: center;
+}
+
+.score-number-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+.score-number-strong {
+  background-color: #1b7940;
+}
+
+.score-number-maybe {
+  background-color: #c18a19;
+}
+
+.score-number-weak {
+  background-color: #c1373a;
+}
+
+/* Explanation row under each song */
+
+.explanation-row td {
+  background-color: #fafbff;
+  border-bottom: 1px solid #e1e7f0;
+  padding: 6px 8px 8px;
+}
+
+.row-explanation-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a95b0;
+  margin-bottom: 2px;
+}
+
+.row-explanation-text {
+  font-size: 0.84rem;
+  color: #4c5873;
+  line-height: 1.35;
+}
+
+/* Row interactions */
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.clickable-row:hover {
+  background-color: #f7f8fe;
+}
+
+.explanation-row {
+  cursor: pointer;
+}
+
+/* Modal styling */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(10, 20, 40, 0.52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: #ffffff;
+  border-radius: 14px;
+  max-width: 680px;
+  width: 96%;
+  max-height: 82vh;
+  padding: 18px 18px 20px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #102947;
+}
+
+.modal-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #6a768e;
+  margin-top: 4px;
+}
+
+.modal-score-text {
+  font-size: 0.85rem;
+  color: #6a768e;
+}
+
+.modal-close {
+  border: none;
+  background: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+  border-radius: 999px;
+}
+
+.modal-close:hover {
+  background-color: #eef1fb;
+}
+
+.modal-body {
+  overflow-y: auto;
+  padding-top: 2px;
+}
+
+.modal-explanation {
+  font-size: 0.9rem;
+  color: #323f5b;
+  background-color: #f4f6fd;
+  border-radius: 10px;
+  padding: 10px 11px;
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.detail-item {
+  background-color: #f8f9fe;
+  border-radius: 10px;
+  padding: 8px 9px;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  color: #6a768e;
+  margin-bottom: 3px;
+}
+
+.detail-value {
+  font-size: 0.9rem;
+  color: #102947;
+}
+
+@media (min-width: 850px) {
+  .main {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .upload-panel,
+  .results-panel {
+    flex: 1;
+  }
+}
