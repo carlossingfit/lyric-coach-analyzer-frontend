@@ -109,6 +109,14 @@ function App() {
       "Score label",
       "Explanation",
       "Duration seconds",
+      // Phrase metrics
+      "Total phrases",
+      "Promptable phrases",
+      "Promptable phrases per min",
+      "Promptable phrase coverage",
+      "Average pre phrase gap sec",
+      "Average phrase duration sec",
+      // Legacy gap metrics
       "Comfortable gaps per min",
       "Total gaps per min",
       "Average gap sec",
@@ -123,6 +131,22 @@ function App() {
       scoreToLabel(item.score),
       item.explanation ?? "",
       item.duration_seconds !== undefined ? item.duration_seconds.toFixed(3) : "",
+      // Phrase metrics
+      item.total_phrases ?? "",
+      item.num_promptable_phrases ?? "",
+      item.promptable_phrases_per_minute !== undefined
+        ? item.promptable_phrases_per_minute.toFixed(4)
+        : "",
+      item.promptable_phrase_coverage !== undefined
+        ? item.promptable_phrase_coverage.toFixed(4)
+        : "",
+      item.avg_pre_gap_for_promptable_sec !== undefined
+        ? item.avg_pre_gap_for_promptable_sec.toFixed(4)
+        : "",
+      item.avg_phrase_duration_sec !== undefined
+        ? item.avg_phrase_duration_sec.toFixed(4)
+        : "",
+      // Legacy gap metrics
       item.comfortable_gaps_per_minute !== undefined
         ? item.comfortable_gaps_per_minute.toFixed(4)
         : "",
@@ -173,6 +197,11 @@ function App() {
     const seconds = Math.round(total - minutes * 60);
     const padded = String(seconds).padStart(2, "0");
     return `${minutes}:${padded}`;
+  };
+
+  const formatPercent = (value) => {
+    if (value === null || value === undefined || Number.isNaN(value)) return "n/a";
+    return `${Math.round(value * 100)}%`;
   };
 
   return (
@@ -248,9 +277,9 @@ function App() {
                     <th className="col-filename">Filename</th>
                     <th className="col-score-number">Score</th>
                     <th className="col-score-label">Score label</th>
-                    <th className="col-metric">Comfortable gaps / min</th>
-                    <th className="col-metric">Total gaps / min</th>
-                    <th className="col-metric">Average gap (sec)</th>
+                    <th className="col-metric">Promptable phrases / min</th>
+                    <th className="col-metric">Promptable phrase coverage</th>
+                    <th className="col-metric">Average pre-phrase gap (sec)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -276,18 +305,18 @@ function App() {
                           </span>
                         </td>
                         <td>
-                          {item.comfortable_gaps_per_minute !== undefined
-                            ? item.comfortable_gaps_per_minute.toFixed(2)
+                          {item.promptable_phrases_per_minute !== undefined
+                            ? item.promptable_phrases_per_minute.toFixed(2)
                             : "n/a"}
                         </td>
                         <td>
-                          {item.total_gaps_per_minute !== undefined
-                            ? item.total_gaps_per_minute.toFixed(2)
+                          {item.promptable_phrase_coverage !== undefined
+                            ? formatPercent(item.promptable_phrase_coverage)
                             : "n/a"}
                         </td>
                         <td>
-                          {item.avg_gap_duration_sec !== undefined
-                            ? item.avg_gap_duration_sec.toFixed(2)
+                          {item.avg_pre_gap_for_promptable_sec !== undefined
+                            ? item.avg_pre_gap_for_promptable_sec.toFixed(2)
                             : "n/a"}
                         </td>
                       </tr>
@@ -313,8 +342,9 @@ function App() {
               </table>
 
               <div className="results-note">
-                Scores are based on relative gap distribution and your calibrated rules:
-                3 = strong candidate, 2 = borderline or maybe, 1 = probably not.
+                Scores are based on how many vocal phrases have enough pre-phrase
+                space for prompts and how often those opportunities appear across
+                the song. 3 = strong candidate, 2 = borderline or maybe, 1 = probably not.
                 Click any row to see more details.
               </div>
             </div>
@@ -364,6 +394,62 @@ function App() {
                   </div>
                 </div>
 
+                {/* Phrase-focused metrics */}
+                <div className="detail-item">
+                  <div className="detail-label">Total phrases</div>
+                  <div className="detail-value">
+                    {selectedSong.total_phrases ?? "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Promptable phrases</div>
+                  <div className="detail-value">
+                    {selectedSong.num_promptable_phrases ?? "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Promptable phrases per min</div>
+                  <div className="detail-value">
+                    {selectedSong.promptable_phrases_per_minute !== undefined
+                      ? selectedSong.promptable_phrases_per_minute.toFixed(2)
+                      : "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Promptable phrase coverage</div>
+                  <div className="detail-value">
+                    {selectedSong.promptable_phrase_coverage !== undefined
+                      ? formatPercent(selectedSong.promptable_phrase_coverage)
+                      : "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Average pre-phrase gap</div>
+                  <div className="detail-value">
+                    {selectedSong.avg_pre_gap_for_promptable_sec !== undefined
+                      ? `${selectedSong.avg_pre_gap_for_promptable_sec.toFixed(
+                          2
+                        )} sec`
+                      : "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Average phrase length</div>
+                  <div className="detail-value">
+                    {selectedSong.avg_phrase_duration_sec !== undefined
+                      ? `${selectedSong.avg_phrase_duration_sec.toFixed(
+                          2
+                        )} sec`
+                      : "n/a"}
+                  </div>
+                </div>
+
+                {/* Legacy gap metrics */}
                 <div className="detail-item">
                   <div className="detail-label">Comfortable gaps per min</div>
                   <div className="detail-value">
