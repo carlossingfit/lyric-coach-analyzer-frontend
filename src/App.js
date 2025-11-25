@@ -103,20 +103,19 @@ function App() {
       return;
     }
 
+    // Phrase metrics first, then gap metrics
     const headers = [
       "Filename",
       "Score",
       "Score label",
       "Explanation",
       "Duration seconds",
-      // Phrase metrics
-      "Total phrases",
-      "Promptable phrases",
       "Promptable phrases per min",
       "Promptable phrase coverage",
-      "Average pre phrase gap sec",
-      "Average phrase duration sec",
-      // Legacy gap metrics
+      "Avg pre gap for promptable sec",
+      "Total phrases",
+      "Promptable phrase count",
+      "Avg phrase duration sec",
       "Comfortable gaps per min",
       "Total gaps per min",
       "Average gap sec",
@@ -131,9 +130,6 @@ function App() {
       scoreToLabel(item.score),
       item.explanation ?? "",
       item.duration_seconds !== undefined ? item.duration_seconds.toFixed(3) : "",
-      // Phrase metrics
-      item.total_phrases ?? "",
-      item.num_promptable_phrases ?? "",
       item.promptable_phrases_per_minute !== undefined
         ? item.promptable_phrases_per_minute.toFixed(4)
         : "",
@@ -143,10 +139,11 @@ function App() {
       item.avg_pre_gap_for_promptable_sec !== undefined
         ? item.avg_pre_gap_for_promptable_sec.toFixed(4)
         : "",
+      item.total_phrases ?? "",
+      item.num_promptable_phrases ?? "",
       item.avg_phrase_duration_sec !== undefined
         ? item.avg_phrase_duration_sec.toFixed(4)
         : "",
-      // Legacy gap metrics
       item.comfortable_gaps_per_minute !== undefined
         ? item.comfortable_gaps_per_minute.toFixed(4)
         : "",
@@ -199,9 +196,11 @@ function App() {
     return `${minutes}:${padded}`;
   };
 
-  const formatPercent = (value) => {
-    if (value === null || value === undefined || Number.isNaN(value)) return "n/a";
-    return `${Math.round(value * 100)}%`;
+  const formatCoveragePercent = (value) => {
+    if (value === null || value === undefined || Number.isNaN(value)) {
+      return "n/a";
+    }
+    return `${(Number(value) * 100).toFixed(0)}%`;
   };
 
   return (
@@ -277,9 +276,9 @@ function App() {
                     <th className="col-filename">Filename</th>
                     <th className="col-score-number">Score</th>
                     <th className="col-score-label">Score label</th>
-                    <th className="col-metric">Promptable phrases / min</th>
+                    <th className="col-metric">Promptable phrases per min</th>
                     <th className="col-metric">Promptable phrase coverage</th>
-                    <th className="col-metric">Average pre-phrase gap (sec)</th>
+                    <th className="col-metric">Avg pre gap for promptable (sec)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -311,7 +310,7 @@ function App() {
                         </td>
                         <td>
                           {item.promptable_phrase_coverage !== undefined
-                            ? formatPercent(item.promptable_phrase_coverage)
+                            ? formatCoveragePercent(item.promptable_phrase_coverage)
                             : "n/a"}
                         </td>
                         <td>
@@ -342,10 +341,9 @@ function App() {
               </table>
 
               <div className="results-note">
-                Scores are based on how many vocal phrases have enough pre-phrase
-                space for prompts and how often those opportunities appear across
-                the song. 3 = strong candidate, 2 = borderline or maybe, 1 = probably not.
-                Click any row to see more details.
+                Scores are based on vocal phrase structure and your calibrated rules:
+                3 is a strong candidate, 2 is borderline or maybe, 1 is probably not.
+                Click any row to see detailed phrase and gap metrics.
               </div>
             </div>
           )}
@@ -384,6 +382,7 @@ function App() {
               )}
 
               <div className="detail-grid">
+                {/* Duration */}
                 <div className="detail-item">
                   <div className="detail-label">Duration</div>
                   <div className="detail-value">
@@ -394,21 +393,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* Phrase-focused metrics */}
-                <div className="detail-item">
-                  <div className="detail-label">Total phrases</div>
-                  <div className="detail-value">
-                    {selectedSong.total_phrases ?? "n/a"}
-                  </div>
-                </div>
-
-                <div className="detail-item">
-                  <div className="detail-label">Promptable phrases</div>
-                  <div className="detail-value">
-                    {selectedSong.num_promptable_phrases ?? "n/a"}
-                  </div>
-                </div>
-
+                {/* Phrase metrics */}
                 <div className="detail-item">
                   <div className="detail-label">Promptable phrases per min</div>
                   <div className="detail-value">
@@ -422,13 +407,29 @@ function App() {
                   <div className="detail-label">Promptable phrase coverage</div>
                   <div className="detail-value">
                     {selectedSong.promptable_phrase_coverage !== undefined
-                      ? formatPercent(selectedSong.promptable_phrase_coverage)
+                      ? formatCoveragePercent(
+                          selectedSong.promptable_phrase_coverage
+                        )
                       : "n/a"}
                   </div>
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">Average pre-phrase gap</div>
+                  <div className="detail-label">Total phrases</div>
+                  <div className="detail-value">
+                    {selectedSong.total_phrases ?? "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Promptable phrase count</div>
+                  <div className="detail-value">
+                    {selectedSong.num_promptable_phrases ?? "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Avg pre gap for promptable</div>
                   <div className="detail-value">
                     {selectedSong.avg_pre_gap_for_promptable_sec !== undefined
                       ? `${selectedSong.avg_pre_gap_for_promptable_sec.toFixed(
@@ -439,7 +440,7 @@ function App() {
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">Average phrase length</div>
+                  <div className="detail-label">Avg phrase duration</div>
                   <div className="detail-value">
                     {selectedSong.avg_phrase_duration_sec !== undefined
                       ? `${selectedSong.avg_phrase_duration_sec.toFixed(
@@ -449,7 +450,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* Legacy gap metrics */}
+                {/* Gap metrics */}
                 <div className="detail-item">
                   <div className="detail-label">Comfortable gaps per min</div>
                   <div className="detail-value">
@@ -495,11 +496,14 @@ function App() {
                   <div className="detail-label">Median gap length</div>
                   <div className="detail-value">
                     {selectedSong.median_gap_duration_sec !== undefined
-                      ? `${selectedSong.median_gap_duration_sec.toFixed(2)} sec`
+                      ? `${selectedSong.median_gap_duration_sec.toFixed(
+                          2
+                        )} sec`
                       : "n/a"}
                   </div>
                 </div>
 
+                {/* Threshold info */}
                 <div className="detail-item">
                   <div className="detail-label">Quiet threshold (dB)</div>
                   <div className="detail-value">
