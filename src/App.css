@@ -1,21 +1,22 @@
 :root {
-  --color-bg: #050816;
-  --color-bg-soft: #0b1020;
-  --color-panel: #10172f;
-  --color-panel-alt: #0f172a;
-  --color-border: rgba(148, 163, 184, 0.4);
-  --color-primary: #f47534; /* update to your brand primary if needed */
-  --color-primary-soft: rgba(244, 117, 52, 0.12);
+  --color-bg: #f3f4f6;
+  --color-bg-soft: #ffffff;
+  --color-panel: #ffffff;
+  --color-panel-alt: #fafafa;
+  --color-border: rgba(209, 213, 219, 1);
+  --color-primary: #f47534; /* SingFit orange */
+  --color-primary-soft: rgba(244, 117, 52, 0.08);
   --color-primary-strong: #ea580c;
-  --color-text: #e5e7eb;
-  --color-text-muted: #9ca3af;
-  --color-error: #f97373;
+  --color-text: #111827;
+  --color-text-muted: #6b7280;
+  --color-error: #b91c1c;
   --radius-lg: 16px;
   --radius-xl: 24px;
-  --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.7);
-  --shadow-panel: 0 14px 30px rgba(15, 23, 42, 0.7);
+  --shadow-soft: 0 10px 25px rgba(15, 23, 42, 0.08);
+  --shadow-panel: 0 18px 40px rgba(15, 23, 42, 0.06);
   --transition-fast: 0.18s ease-out;
 }
+
 
 *,
 *::before,
@@ -33,9 +34,10 @@ body,
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
+  background: #f3f4f6; /* light gray */
   color: var(--color-text);
 }
+
 
 /* Root layout */
 
@@ -48,9 +50,8 @@ body {
 /* Top bar */
 
 .top-bar {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
-  background: linear-gradient(120deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.95));
-  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(209, 213, 219, 1);
+  background: #ffffff;
 }
 
 .top-bar-inner {
@@ -62,6 +63,7 @@ body {
   justify-content: space-between;
   gap: 16px;
 }
+
 
 .brand {
   display: flex;
@@ -138,12 +140,13 @@ body {
 /* Panels */
 
 .panel {
-  background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.96));
+  background: var(--color-panel);
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-panel);
   padding: 18px 18px 20px;
 }
+
 
 .upload-panel {
   position: sticky;
@@ -317,8 +320,8 @@ button {
   margin-top: 8px;
   border-radius: 18px;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.94));
+  border: 1px solid var(--color-border);
+  background: #ffffff;
 }
 
 .results-table {
@@ -328,7 +331,7 @@ button {
 }
 
 .results-table thead {
-  background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.6), rgba(15, 23, 42, 1));
+  background: #f9fafb;
 }
 
 .results-table th,
@@ -471,7 +474,7 @@ button {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.25), rgba(15, 23, 42, 0.9));
+  background: rgba(15, 23, 42, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -484,10 +487,10 @@ button {
   width: 100%;
   max-height: 80vh;
   overflow: auto;
-  background: radial-gradient(circle at top left, #020617, #020617);
+  background: #ffffff;
   border-radius: 22px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  border: 1px solid var(--color-border);
   padding: 18px 20px 20px;
 }
 
@@ -536,12 +539,11 @@ button {
 .modal-explanation {
   font-size: 0.86rem;
   line-height: 1.6;
-  color: rgba(226, 232, 240, 0.95);
+  color: var(--color-text);
   padding: 8px 10px;
   border-radius: 14px;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  margin-bottom: 12px;
+  background: #f9fafb;
+  border: 1px solid var(--color-border);
 }
 
 /* Detail grid */
@@ -565,10 +567,10 @@ button {
 }
 
 .detail-item {
-  background: rgba(15, 23, 42, 0.96);
+  background: #f9fafb;
   border-radius: 14px;
   padding: 8px 10px;
-  border: 1px solid rgba(31, 41, 55, 1);
+  border: 1px solid var(--color-border);
 }
 
 .detail-label {
