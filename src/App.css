@@ -271,17 +271,19 @@ button {
   color: #7f1d1d;
 }
 
-/* Score legend - single compact pill away from the border */
+/* Score legend - compact pill that does not touch panel edges */
 
 .legend {
   margin-top: 10px;
-  display: inline-flex;            /* only as wide as content */
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;               /* inner padding so chips do not touch edges */
+  padding: 4px 10px;
   border-radius: 999px;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
+  width: fit-content;      /* shrink to content width */
+  max-width: 100%;
 }
 
 .legend-label {
@@ -442,7 +444,7 @@ button {
 .score-badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;   /* center text horizontally */
+  justify-content: center;
   padding: 3px 9px;
   border-radius: 999px;
   font-size: 0.76rem;
@@ -573,11 +575,11 @@ button {
 .modal-explanation {
   font-size: 0.86rem;
   line-height: 1.6;
-  color: var(--color-text);
+  color: #111827;
   padding: 8px 10px;
   border-radius: 14px;
   background: #f9fafb;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
   margin-bottom: 12px;
 }
 
@@ -605,7 +607,7 @@ button {
   background: #f9fafb;
   border-radius: 14px;
   padding: 8px 10px;
-  border: 1px solid var(--color-border);
+  border: 1px solid #e5e7eb;
 }
 
 .detail-label {
