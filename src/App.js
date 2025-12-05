@@ -41,9 +41,9 @@ function App() {
       });
 
       const response = await fetch(`${config.API_BASE_URL}/analyze-upload`, {
-  method: "POST",
-  body: formData,
-});
+        method: "POST",
+        body: formData,
+      });
 
       if (!response.ok) {
         throw new Error(`Server responded with status ${response.status}`);
@@ -55,8 +55,6 @@ function App() {
         setError(data.error);
         setResults([]);
       } else if (Array.isArray(data.results)) {
-        // New backend: metrics are nested under item.metrics
-        // Flatten them to top level and compute duration_seconds from song_minutes
         const normalizedResults = data.results.map((item) => {
           const metrics = item.metrics || {};
           const songMinutes = metrics.song_minutes;
@@ -118,7 +116,6 @@ function App() {
       return;
     }
 
-    // Use only metrics the backend actually returns in metrics summary
     const headers = [
       "Filename",
       "Score",
@@ -221,141 +218,175 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>Lyric Coach Analyzer</h1>
-        <p className="subtitle">
-          Upload songs to estimate whether they have enough gaps for spoken lyric prompts.
-        </p>
+    <div className="app-root">
+      <header className="top-bar">
+        <div className="top-bar-inner">
+          <div className="brand">
+            {/* Put your logo file at public/logo.png or change the src */}
+            <img
+              src="/logo.png"
+              alt="Company logo"
+              className="brand-logo"
+            />
+            <div className="brand-text">
+              <h1 className="app-title">Lyric Coach Analyzer</h1>
+              <p className="subtitle">
+                Upload songs to estimate whether they have enough gaps for spoken lyric prompts.
+              </p>
+            </div>
+          </div>
+          <div className="app-tag">
+            Internal tool
+          </div>
+        </div>
       </header>
 
-      <main className="main">
-        <section className="upload-panel">
-          <h2>1. Select audio files</h2>
-          <p className="hint">
-            Choose one or many MP3 or WAV files. They will be scored using your Lyric Coach model.
-          </p>
-
-          <input
-            type="file"
-            multiple
-            accept=".mp3,.wav,.m4a,.flac"
-            onChange={handleFileChange}
-          />
-
-          <div className="actions">
-            <button onClick={handleUpload} disabled={loading || !files.length}>
-              {loading ? "Analyzing..." : "Upload and Analyze"}
-            </button>
-          </div>
-
-          {statusMessage && <div className="status">{statusMessage}</div>}
-
-          {error && <div className="error">{error}</div>}
-        </section>
-
-        <section className="results-panel">
-          <div className="results-header-row">
-            <h2>2. Results</h2>
-            {results.length > 0 && (
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={handleDownloadCSV}
-              >
-                Download CSV
-              </button>
-            )}
-          </div>
-
-          {!results.length && (
+      <main className="app-main">
+        <div className="app-container">
+          <section className="panel upload-panel">
+            <h2 className="panel-title">1. Select audio files</h2>
             <p className="hint">
-              After you upload songs, results will appear here with scores and key metrics.
+              Choose one or many MP3, WAV, M4A, or FLAC files.  
+              They will be scored using your Lyric Coach model.
             </p>
-          )}
 
-          {results.length > 0 && (
-            <div className="results-table-wrapper">
-              <table className="results-table">
-                <thead>
-                  <tr>
-                    <th className="col-filename">Filename</th>
-                    <th className="col-score-number">Score</th>
-                    <th className="col-score-label">Score label</th>
-                    <th className="col-metric">Promptable phrases per min</th>
-                    <th className="col-metric">Promptable phrase coverage</th>
-                    <th className="col-metric">Comfortable gaps per min</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map((item, index) => (
-                    <React.Fragment key={index}>
-                      <tr
-                        className="clickable-row"
-                        onClick={() => handleRowClick(item)}
-                      >
-                        <td className="filename-cell">{item.filename}</td>
-                        <td className="score-number-cell">
-                          {item.score != null ? (
-                            <span className={scoreNumberClass(item.score)}>
-                              {item.score}
-                            </span>
-                          ) : (
-                            "?"
-                          )}
-                        </td>
-                        <td>
-                          <span className={scoreToClass(item.score)}>
-                            {scoreToLabel(item.score)}
-                          </span>
-                        </td>
-                        <td>
-                          {item.promptable_phrases_per_minute !== undefined
-                            ? item.promptable_phrases_per_minute.toFixed(2)
-                            : "n/a"}
-                        </td>
-                        <td>
-                          {item.promptable_phrase_coverage !== undefined
-                            ? formatCoveragePercent(
-                                item.promptable_phrase_coverage
-                              )
-                            : "n/a"}
-                        </td>
-                        <td>
-                          {item.comfortable_gaps_per_minute !== undefined
-                            ? item.comfortable_gaps_per_minute.toFixed(2)
-                            : "n/a"}
-                        </td>
-                      </tr>
+            <label className="file-input-label">
+              <span className="file-input-button">Choose files</span>
+              <input
+                type="file"
+                multiple
+                accept=".mp3,.wav,.m4a,.flac"
+                onChange={handleFileChange}
+              />
+            </label>
 
-                      {item.explanation && (
+            <div className="actions">
+              <button
+                className="primary-button"
+                onClick={handleUpload}
+                disabled={loading || !files.length}
+              >
+                {loading ? "Analyzing..." : "Upload and Analyze"}
+              </button>
+            </div>
+
+            {statusMessage && (
+              <div className="status status-info">{statusMessage}</div>
+            )}
+
+            {error && <div className="status status-error">{error}</div>}
+
+            <div className="legend">
+              <span className="legend-label">Score legend</span>
+              <span className="legend-pill legend-strong">3 Strong candidate</span>
+              <span className="legend-pill legend-maybe">2 Maybe</span>
+              <span className="legend-pill legend-weak">1 Probably not</span>
+            </div>
+          </section>
+
+          <section className="panel results-panel">
+            <div className="results-header-row">
+              <h2 className="panel-title">2. Results</h2>
+              {results.length > 0 && (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={handleDownloadCSV}
+                >
+                  Download CSV
+                </button>
+              )}
+            </div>
+
+            {!results.length && (
+              <p className="hint">
+                After you upload songs, results will appear here with scores and key metrics.  
+                Click a row to open a detailed metrics panel.
+              </p>
+            )}
+
+            {results.length > 0 && (
+              <div className="results-table-wrapper">
+                <table className="results-table">
+                  <thead>
+                    <tr>
+                      <th className="col-filename">Filename</th>
+                      <th className="col-score-number">Score</th>
+                      <th className="col-score-label">Score label</th>
+                      <th className="col-metric">Promptable phrases per min</th>
+                      <th className="col-metric">Promptable phrase coverage</th>
+                      <th className="col-metric">Comfortable gaps per min</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((item, index) => (
+                      <React.Fragment key={index}>
                         <tr
-                          className="explanation-row"
+                          className="clickable-row"
                           onClick={() => handleRowClick(item)}
                         >
-                          <td colSpan={6}>
-                            <div className="row-explanation-label">
-                              Score explanation
-                            </div>
-                            <div className="row-explanation-text">
-                              {item.explanation}
-                            </div>
+                          <td className="filename-cell">{item.filename}</td>
+                          <td className="score-number-cell">
+                            {item.score != null ? (
+                              <span className={scoreNumberClass(item.score)}>
+                                {item.score}
+                              </span>
+                            ) : (
+                              "?"
+                            )}
+                          </td>
+                          <td>
+                            <span className={scoreToClass(item.score)}>
+                              {scoreToLabel(item.score)}
+                            </span>
+                          </td>
+                          <td>
+                            {item.promptable_phrases_per_minute !== undefined
+                              ? item.promptable_phrases_per_minute.toFixed(2)
+                              : "n/a"}
+                          </td>
+                          <td>
+                            {item.promptable_phrase_coverage !== undefined
+                              ? formatCoveragePercent(
+                                  item.promptable_phrase_coverage
+                                )
+                              : "n/a"}
+                          </td>
+                          <td>
+                            {item.comfortable_gaps_per_minute !== undefined
+                              ? item.comfortable_gaps_per_minute.toFixed(2)
+                              : "n/a"}
                           </td>
                         </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
 
-              <div className="results-note">
-                Scores are based on vocal phrase structure and your calibrated rules:
-                3 is a strong candidate, 2 is borderline or maybe, 1 is probably not.
-                Click any row to see detailed phrase and gap metrics.
+                        {item.explanation && (
+                          <tr
+                            className="explanation-row"
+                            onClick={() => handleRowClick(item)}
+                          >
+                            <td colSpan={6}>
+                              <div className="row-explanation-label">
+                                Score explanation
+                              </div>
+                              <div className="row-explanation-text">
+                                {item.explanation}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="results-note">
+                  Scores are based on vocal phrase structure and your calibrated rules.  
+                  Click any row to see detailed phrase and gap metrics.
+                </div>
               </div>
-            </div>
-          )}
-        </section>
+            )}
+          </section>
+        </div>
       </main>
 
       {selectedSong && (
@@ -390,7 +421,6 @@ function App() {
               )}
 
               <div className="detail-grid">
-                {/* Duration */}
                 <div className="detail-item">
                   <div className="detail-label">Duration</div>
                   <div className="detail-value">
@@ -401,7 +431,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Phrase metrics */}
                 <div className="detail-item">
                   <div className="detail-label">Song minutes</div>
                   <div className="detail-value">
@@ -483,7 +512,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Gap metrics */}
                 <div className="detail-item">
                   <div className="detail-label">
                     Comfortable gaps per min
