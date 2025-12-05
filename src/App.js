@@ -40,10 +40,10 @@ function App() {
         formData.append("files", file);
       });
 
-      const response = await fetch(`${config.API_BASE_URL}/batch-score`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(`${config.API_BASE_URL}/analyze-upload`, {
+  method: "POST",
+  body: formData,
+});
 
       if (!response.ok) {
         throw new Error(`Server responded with status ${response.status}`);
