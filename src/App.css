@@ -121,7 +121,7 @@ body {
   max-width: 1120px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr); /* wider results panel */
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr);
   gap: 20px;
   align-items: flex-start;
 }
@@ -271,30 +271,32 @@ button {
   color: #7f1d1d;
 }
 
-/* Score legend in upload panel – compact, no scroll */
+/* Score legend – one row, smaller pills */
 
 .legend {
   margin-top: 10px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   align-items: center;
 }
 
 .legend-label {
-  flex-basis: 100%;          /* label on its own line */
+  flex: 0 0 auto;
   color: var(--color-text-muted);
-  margin-right: 0;
+  margin-right: 8px;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .legend-pill {
+  flex: 0 0 auto;
   border-radius: 999px;
-  padding: 4px 8px;
+  padding: 3px 6px;
   border: 1px solid #d1d5db;
   background: #f9fafb;
   white-space: nowrap;
+  font-size: 0.72rem;
 }
 
 .legend-strong {
@@ -330,7 +332,7 @@ button {
   border-radius: 18px;
   border: 1px solid var(--color-border);
   background: #ffffff;
-  overflow-x: visible; /* no horizontal scrollbar at normal sizes */
+  overflow-x: visible;
   overflow-y: visible;
 }
 
@@ -338,7 +340,7 @@ button {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.82rem;
-  table-layout: fixed;   /* columns share space */
+  table-layout: fixed;
 }
 
 .results-table thead {
@@ -360,11 +362,11 @@ button {
   font-weight: 600;
 }
 
-.results-table tbody tr:last-child td {
+.results-table tbody raport:last-child td {
   border-bottom: none;
 }
 
-/* column hints – table-layout: fixed uses these as proportions */
+/* column hints */
 
 .col-filename {
   width: 32%;
@@ -396,8 +398,6 @@ button {
   cursor: pointer;
   transition: background var(--transition-fast);
 }
-
-/* remove bottom border so explanation row visually connects */
 
 .clickable-row td {
   border-bottom: none;
@@ -439,11 +439,13 @@ button {
 .score-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;   /* center text horizontally */
   padding: 3px 9px;
   border-radius: 999px;
   font-size: 0.76rem;
   border: 1px solid #d1d5db;
   background: #f9fafb;
+  text-align: center;
 }
 
 .score-strong {
@@ -467,10 +469,10 @@ button {
 /* Explanation rows – highlighted and visually tied to score row */
 
 .explanation-row td {
-  background: #fff7ed;                           /* soft orange band */
-  border-top: none;                              /* no line between score and explanation */
+  background: #fff7ed;
+  border-top: none;
   border-bottom: 1px solid #fed7aa;
-  border-left: 3px solid var(--color-primary);   /* accent bar to the left */
+  border-left: 3px solid var(--color-primary);
 }
 
 .row-explanation-label {
