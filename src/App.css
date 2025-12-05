@@ -121,7 +121,7 @@ body {
   max-width: 1120px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr); /* Results panel wider */
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr); /* wider results panel */
   gap: 20px;
   align-items: flex-start;
 }
@@ -271,18 +271,22 @@ button {
   color: #7f1d1d;
 }
 
+/* keep legend on one line in the upload panel */
+
 .legend {
   margin-top: 14px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* prevent second line */
   gap: 6px;
   align-items: center;
   font-size: 0.75rem;
+  overflow-x: auto;
 }
 
 .legend-label {
   color: var(--color-text-muted);
   margin-right: 4px;
+  white-space: nowrap;
 }
 
 .legend-pill {
@@ -290,6 +294,7 @@ button {
   padding: 4px 8px;
   border: 1px solid #d1d5db;
   background: #f9fafb;
+  white-space: nowrap;
 }
 
 .legend-strong {
@@ -388,6 +393,12 @@ button {
   transition: background var(--transition-fast);
 }
 
+/* remove bottom border so the explanation row visually connects */
+
+.clickable-row td {
+  border-bottom: none;
+}
+
 .clickable-row:hover {
   background: #f3f4ff;
 }
@@ -449,17 +460,20 @@ button {
   color: #b91c1c;
 }
 
-/* Explanation rows - softened */
+/* Explanation rows - a bit more emphasis, clearly tied to score row */
 
 .explanation-row td {
-  background: #f3f4f6;
+  background: #fff7ed;                           /* soft orange band */
+  border-top: none;                              /* no line between score and explanation */
+  border-bottom: 1px solid #fed7aa;
+  border-left: 3px solid var(--color-primary);   /* accent bar to the left */
 }
 
 .row-explanation-label {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #6b7280;
+  color: #9a3412;
   margin-bottom: 3px;
 }
 
