@@ -55,8 +55,23 @@ function App() {
         setError(data.error);
         setResults([]);
       } else if (Array.isArray(data.results)) {
-        setResults(data.results);
-        setStatusMessage(`Processed ${data.results.length} file(s).`);
+        // New backend: metrics are nested under item.metrics
+        // Flatten them to top level and compute duration_seconds from song_minutes
+        const normalizedResults = data.results.map((item) => {
+          const metrics = item.metrics || {};
+          const songMinutes = metrics.song_minutes;
+          const durationSeconds =
+            typeof songMinutes === "number" ? songMinutes * 60 : undefined;
+
+          return {
+            ...item,
+            ...metrics,
+            duration_seconds: durationSeconds,
+          };
+        });
+
+        setResults(normalizedResults);
+        setStatusMessage(`Processed ${normalizedResults.length} file(s).`);
       } else {
         setError("Unexpected response format from server.");
         setResults([]);
@@ -103,25 +118,25 @@ function App() {
       return;
     }
 
-    // Phrase metrics first, then gap metrics
+    // Use only metrics the backend actually returns in metrics summary
     const headers = [
       "Filename",
       "Score",
       "Score label",
       "Explanation",
+      "Song minutes",
       "Duration seconds",
-      "Promptable phrases per min",
-      "Promptable phrase coverage",
-      "Avg pre gap for promptable sec",
       "Total phrases",
       "Promptable phrase count",
-      "Avg phrase duration sec",
+      "Near promptable phrase count",
+      "Promptable phrases per min",
+      "Near promptable phrases per min",
+      "Promptable phrase coverage",
       "Comfortable gaps per min",
+      "Comfortable gap coverage",
       "Total gaps per min",
-      "Average gap sec",
-      "Median gap sec",
-      "Total gaps",
-      "Comfortable gaps count",
+      "Avg phrase duration sec",
+      "Usable density",
     ];
 
     const rows = results.map((item) => [
@@ -129,35 +144,37 @@ function App() {
       item.score,
       scoreToLabel(item.score),
       item.explanation ?? "",
-      item.duration_seconds !== undefined ? item.duration_seconds.toFixed(3) : "",
+      item.song_minutes !== undefined ? item.song_minutes.toFixed(3) : "",
+      item.duration_seconds !== undefined
+        ? item.duration_seconds.toFixed(3)
+        : "",
+      item.total_phrases ?? "",
+      item.num_promptable_phrases ?? "",
+      item.near_promptable_phrases ?? "",
       item.promptable_phrases_per_minute !== undefined
         ? item.promptable_phrases_per_minute.toFixed(4)
+        : "",
+      item.near_promptable_phrases_per_minute !== undefined
+        ? item.near_promptable_phrases_per_minute.toFixed(4)
         : "",
       item.promptable_phrase_coverage !== undefined
         ? item.promptable_phrase_coverage.toFixed(4)
         : "",
-      item.avg_pre_gap_for_promptable_sec !== undefined
-        ? item.avg_pre_gap_for_promptable_sec.toFixed(4)
-        : "",
-      item.total_phrases ?? "",
-      item.num_promptable_phrases ?? "",
-      item.avg_phrase_duration_sec !== undefined
-        ? item.avg_phrase_duration_sec.toFixed(4)
-        : "",
       item.comfortable_gaps_per_minute !== undefined
         ? item.comfortable_gaps_per_minute.toFixed(4)
+        : "",
+      item.comfortable_gap_coverage !== undefined
+        ? item.comfortable_gap_coverage.toFixed(4)
         : "",
       item.total_gaps_per_minute !== undefined
         ? item.total_gaps_per_minute.toFixed(4)
         : "",
-      item.avg_gap_duration_sec !== undefined
-        ? item.avg_gap_duration_sec.toFixed(4)
+      item.avg_phrase_duration_sec !== undefined
+        ? item.avg_phrase_duration_sec.toFixed(4)
         : "",
-      item.median_gap_duration_sec !== undefined
-        ? item.median_gap_duration_sec.toFixed(4)
+      item.usable_density !== undefined
+        ? item.usable_density.toFixed(4)
         : "",
-      item.total_gaps ?? "",
-      item.num_comfortable_gaps ?? "",
     ]);
 
     const csvLines = [
@@ -227,25 +244,14 @@ function App() {
           />
 
           <div className="actions">
-            <button
-              onClick={handleUpload}
-              disabled={loading || !files.length}
-            >
+            <button onClick={handleUpload} disabled={loading || !files.length}>
               {loading ? "Analyzing..." : "Upload and Analyze"}
             </button>
           </div>
 
-          {statusMessage && (
-            <div className="status">
-              {statusMessage}
-            </div>
-          )}
+          {statusMessage && <div className="status">{statusMessage}</div>}
 
-          {error && (
-            <div className="error">
-              {error}
-            </div>
-          )}
+          {error && <div className="error">{error}</div>}
         </section>
 
         <section className="results-panel">
@@ -278,7 +284,7 @@ function App() {
                     <th className="col-score-label">Score label</th>
                     <th className="col-metric">Promptable phrases per min</th>
                     <th className="col-metric">Promptable phrase coverage</th>
-                    <th className="col-metric">Avg pre gap for promptable (sec)</th>
+                    <th className="col-metric">Comfortable gaps per min</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -310,12 +316,14 @@ function App() {
                         </td>
                         <td>
                           {item.promptable_phrase_coverage !== undefined
-                            ? formatCoveragePercent(item.promptable_phrase_coverage)
+                            ? formatCoveragePercent(
+                                item.promptable_phrase_coverage
+                              )
                             : "n/a"}
                         </td>
                         <td>
-                          {item.avg_pre_gap_for_promptable_sec !== undefined
-                            ? item.avg_pre_gap_for_promptable_sec.toFixed(2)
+                          {item.comfortable_gaps_per_minute !== undefined
+                            ? item.comfortable_gaps_per_minute.toFixed(2)
                             : "n/a"}
                         </td>
                       </tr>
@@ -395,21 +403,10 @@ function App() {
 
                 {/* Phrase metrics */}
                 <div className="detail-item">
-                  <div className="detail-label">Promptable phrases per min</div>
+                  <div className="detail-label">Song minutes</div>
                   <div className="detail-value">
-                    {selectedSong.promptable_phrases_per_minute !== undefined
-                      ? selectedSong.promptable_phrases_per_minute.toFixed(2)
-                      : "n/a"}
-                  </div>
-                </div>
-
-                <div className="detail-item">
-                  <div className="detail-label">Promptable phrase coverage</div>
-                  <div className="detail-value">
-                    {selectedSong.promptable_phrase_coverage !== undefined
-                      ? formatCoveragePercent(
-                          selectedSong.promptable_phrase_coverage
-                        )
+                    {selectedSong.song_minutes !== undefined
+                      ? selectedSong.song_minutes.toFixed(2)
                       : "n/a"}
                   </div>
                 </div>
@@ -422,19 +419,55 @@ function App() {
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">Promptable phrase count</div>
+                  <div className="detail-label">
+                    Promptable phrase count
+                  </div>
                   <div className="detail-value">
                     {selectedSong.num_promptable_phrases ?? "n/a"}
                   </div>
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">Avg pre gap for promptable</div>
+                  <div className="detail-label">
+                    Near promptable phrase count
+                  </div>
                   <div className="detail-value">
-                    {selectedSong.avg_pre_gap_for_promptable_sec !== undefined
-                      ? `${selectedSong.avg_pre_gap_for_promptable_sec.toFixed(
+                    {selectedSong.near_promptable_phrases ?? "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    Promptable phrases per min
+                  </div>
+                  <div className="detail-value">
+                    {selectedSong.promptable_phrases_per_minute !== undefined
+                      ? selectedSong.promptable_phrases_per_minute.toFixed(2)
+                      : "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    Near promptable phrases per min
+                  </div>
+                  <div className="detail-value">
+                    {selectedSong.near_promptable_phrases_per_minute !==
+                    undefined
+                      ? selectedSong.near_promptable_phrases_per_minute.toFixed(
                           2
-                        )} sec`
+                        )
+                      : "n/a"}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Promptable coverage</div>
+                  <div className="detail-value">
+                    {selectedSong.promptable_phrase_coverage !== undefined
+                      ? formatCoveragePercent(
+                          selectedSong.promptable_phrase_coverage
+                        )
                       : "n/a"}
                   </div>
                 </div>
@@ -452,7 +485,9 @@ function App() {
 
                 {/* Gap metrics */}
                 <div className="detail-item">
-                  <div className="detail-label">Comfortable gaps per min</div>
+                  <div className="detail-label">
+                    Comfortable gaps per min
+                  </div>
                   <div className="detail-value">
                     {selectedSong.comfortable_gaps_per_minute !== undefined
                       ? selectedSong.comfortable_gaps_per_minute.toFixed(2)
@@ -470,54 +505,23 @@ function App() {
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">Total gaps</div>
-                  <div className="detail-value">
-                    {selectedSong.total_gaps ?? "n/a"}
+                  <div className="detail-label">
+                    Comfortable gap coverage
                   </div>
-                </div>
-
-                <div className="detail-item">
-                  <div className="detail-label">Comfortable gaps count</div>
                   <div className="detail-value">
-                    {selectedSong.num_comfortable_gaps ?? "n/a"}
-                  </div>
-                </div>
-
-                <div className="detail-item">
-                  <div className="detail-label">Average gap length</div>
-                  <div className="detail-value">
-                    {selectedSong.avg_gap_duration_sec !== undefined
-                      ? `${selectedSong.avg_gap_duration_sec.toFixed(2)} sec`
+                    {selectedSong.comfortable_gap_coverage !== undefined
+                      ? formatCoveragePercent(
+                          selectedSong.comfortable_gap_coverage
+                        )
                       : "n/a"}
                   </div>
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">Median gap length</div>
+                  <div className="detail-label">Usable density</div>
                   <div className="detail-value">
-                    {selectedSong.median_gap_duration_sec !== undefined
-                      ? `${selectedSong.median_gap_duration_sec.toFixed(
-                          2
-                        )} sec`
-                      : "n/a"}
-                  </div>
-                </div>
-
-                {/* Threshold info */}
-                <div className="detail-item">
-                  <div className="detail-label">Quiet threshold (dB)</div>
-                  <div className="detail-value">
-                    {selectedSong.threshold_db !== undefined
-                      ? selectedSong.threshold_db.toFixed(1)
-                      : "n/a"}
-                  </div>
-                </div>
-
-                <div className="detail-item">
-                  <div className="detail-label">Quiet percentile</div>
-                  <div className="detail-value">
-                    {selectedSong.quiet_percentile !== undefined
-                      ? `${selectedSong.quiet_percentile}%`
+                    {selectedSong.usable_density !== undefined
+                      ? selectedSong.usable_density.toFixed(2)
                       : "n/a"}
                   </div>
                 </div>
