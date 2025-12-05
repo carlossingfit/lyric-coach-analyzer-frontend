@@ -271,20 +271,23 @@ button {
   color: #7f1d1d;
 }
 
-/* Score legend – one row, smaller pills */
+/* Score legend - single compact pill away from the border */
 
 .legend {
   margin-top: 10px;
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
+  display: inline-flex;            /* only as wide as content */
   align-items: center;
+  gap: 6px;
+  padding: 4px 10px;               /* inner padding so chips do not touch edges */
+  border-radius: 999px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
 }
 
 .legend-label {
   flex: 0 0 auto;
   color: var(--color-text-muted);
-  margin-right: 8px;
+  margin-right: 4px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -294,7 +297,7 @@ button {
   border-radius: 999px;
   padding: 3px 6px;
   border: 1px solid #d1d5db;
-  background: #f9fafb;
+  background: #ffffff;
   white-space: nowrap;
   font-size: 0.72rem;
 }
@@ -362,7 +365,7 @@ button {
   font-weight: 600;
 }
 
-.results-table tbody raport:last-child td {
+.results-table tbody tr:last-child td {
   border-bottom: none;
 }
 
@@ -466,7 +469,7 @@ button {
   color: #b91c1c;
 }
 
-/* Explanation rows – highlighted and visually tied to score row */
+/* Explanation rows */
 
 .explanation-row td {
   background: #fff7ed;
@@ -609,7 +612,7 @@ button {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-text-muted);
+  color: #4b5563;
   margin-bottom: 4px;
 }
 
