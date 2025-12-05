@@ -322,6 +322,11 @@ button {
   color: #b91c1c;
 }
 
+.results-legend {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
 /* Results */
 
 .results-header-row {

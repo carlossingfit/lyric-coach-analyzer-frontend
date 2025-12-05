@@ -275,13 +275,6 @@ function App() {
             )}
 
             {error && <div className="status status-error">{error}</div>}
-
-            <div className="legend">
-              <span className="legend-label">Score legend</span>
-              <span className="legend-pill legend-strong">3 Strong candidate</span>
-              <span className="legend-pill legend-maybe">2 Maybe</span>
-              <span className="legend-pill legend-weak">1 Probably not</span>
-            </div>
           </section>
 
           <section className="panel results-panel">
@@ -306,84 +299,99 @@ function App() {
             )}
 
             {results.length > 0 && (
-              <div className="results-table-wrapper">
-                <table className="results-table">
-                  <thead>
-                    <tr>
-                      <th className="col-filename">Filename</th>
-                      <th className="col-score-number">Score</th>
-                      <th className="col-score-label">Score label</th>
-                      <th className="col-metric">Promptable phrases per min</th>
-                      <th className="col-metric">Promptable phrase coverage</th>
-                      <th className="col-metric">Comfortable gaps per min</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.map((item, index) => (
-                      <React.Fragment key={index}>
-                        <tr
-                          className="clickable-row"
-                          onClick={() => handleRowClick(item)}
-                        >
-                          <td className="filename-cell">{item.filename}</td>
-                          <td className="score-number-cell">
-                            {item.score != null ? (
-                              <span className={scoreNumberClass(item.score)}>
-                                {item.score}
-                              </span>
-                            ) : (
-                              "?"
-                            )}
-                          </td>
-                          <td>
-                            <span className={scoreToClass(item.score)}>
-                              {scoreToLabel(item.score)}
-                            </span>
-                          </td>
-                          <td>
-                            {item.promptable_phrases_per_minute !== undefined
-                              ? item.promptable_phrases_per_minute.toFixed(2)
-                              : "n/a"}
-                          </td>
-                          <td>
-                            {item.promptable_phrase_coverage !== undefined
-                              ? formatCoveragePercent(
-                                  item.promptable_phrase_coverage
-                                )
-                              : "n/a"}
-                          </td>
-                          <td>
-                            {item.comfortable_gaps_per_minute !== undefined
-                              ? item.comfortable_gaps_per_minute.toFixed(2)
-                              : "n/a"}
-                          </td>
-                        </tr>
+              <React.Fragment>
+                <div className="legend results-legend">
+                  <span className="legend-label">Score legend</span>
+                  <span className="legend-pill legend-strong">
+                    3 Strong candidate
+                  </span>
+                  <span className="legend-pill legend-maybe">
+                    2 Maybe
+                  </span>
+                  <span className="legend-pill legend-weak">
+                    1 Probably not
+                  </span>
+                </div>
 
-                        {item.explanation && (
+                <div className="results-table-wrapper">
+                  <table className="results-table">
+                    <thead>
+                      <tr>
+                        <th className="col-filename">Filename</th>
+                        <th className="col-score-number">Score</th>
+                        <th className="col-score-label">Score label</th>
+                        <th className="col-metric">Promptable phrases per min</th>
+                        <th className="col-metric">Promptable phrase coverage</th>
+                        <th className="col-metric">Comfortable gaps per min</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {results.map((item, index) => (
+                        <React.Fragment key={index}>
                           <tr
-                            className="explanation-row"
+                            className="clickable-row"
                             onClick={() => handleRowClick(item)}
                           >
-                            <td colSpan={6}>
-                              <div className="row-explanation-label">
-                                Score explanation
-                              </div>
-                              <div className="row-explanation-text">
-                                {item.explanation}
-                              </div>
+                            <td className="filename-cell">{item.filename}</td>
+                            <td className="score-number-cell">
+                              {item.score != null ? (
+                                <span className={scoreNumberClass(item.score)}>
+                                  {item.score}
+                                </span>
+                              ) : (
+                                "?"
+                              )}
+                            </td>
+                            <td>
+                              <span className={scoreToClass(item.score)}>
+                                {scoreToLabel(item.score)}
+                              </span>
+                            </td>
+                            <td>
+                              {item.promptable_phrases_per_minute !== undefined
+                                ? item.promptable_phrases_per_minute.toFixed(2)
+                                : "n/a"}
+                            </td>
+                            <td>
+                              {item.promptable_phrase_coverage !== undefined
+                                ? formatCoveragePercent(
+                                    item.promptable_phrase_coverage
+                                  )
+                                : "n/a"}
+                            </td>
+                            <td>
+                              {item.comfortable_gaps_per_minute !== undefined
+                                ? item.comfortable_gaps_per_minute.toFixed(2)
+                                : "n/a"}
                             </td>
                           </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
 
-                <div className="results-note">
-                  Scores are based on vocal phrase structure and your calibrated rules.  
-                  Click any row to see detailed phrase and gap metrics.
+                          {item.explanation && (
+                            <tr
+                              className="explanation-row"
+                              onClick={() => handleRowClick(item)}
+                            >
+                              <td colSpan={6}>
+                                <div className="row-explanation-label">
+                                  Score explanation
+                                </div>
+                                <div className="row-explanation-text">
+                                  {item.explanation}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <div className="results-note">
+                    Scores are based on vocal phrase structure and your calibrated rules.  
+                    Click any row to see detailed phrase and gap metrics.
+                  </div>
                 </div>
-              </div>
+              </React.Fragment>
             )}
           </section>
         </div>
