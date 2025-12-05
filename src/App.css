@@ -271,21 +271,21 @@ button {
   color: #7f1d1d;
 }
 
-/* keep legend on one line in the upload panel */
+/* Score legend in upload panel – compact, no scroll */
 
 .legend {
-  margin-top: 14px;
+  margin-top: 10px;
   display: flex;
-  flex-wrap: nowrap; /* prevent second line */
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-  font-size: 0.75rem;
-  overflow-x: auto;
 }
 
 .legend-label {
+  flex-basis: 100%;          /* label on its own line */
   color: var(--color-text-muted);
-  margin-right: 4px;
+  margin-right: 0;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -330,15 +330,15 @@ button {
   border-radius: 18px;
   border: 1px solid var(--color-border);
   background: #ffffff;
-  overflow-x: auto;  /* horizontal scroll still available on small windows */
-  overflow-y: hidden;
+  overflow-x: visible; /* no horizontal scrollbar at normal sizes */
+  overflow-y: visible;
 }
 
 .results-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.82rem;
-  min-width: 820px;   /* smaller than before, with wrapping */
+  table-layout: fixed;   /* columns share space */
 }
 
 .results-table thead {
@@ -351,25 +351,27 @@ button {
   border-bottom: 1px solid #e5e7eb;
   color: #111827;
   vertical-align: top;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
 .results-table th {
   text-align: left;
   font-weight: 600;
-  word-wrap: break-word;
-  white-space: normal;
 }
 
 .results-table tbody tr:last-child td {
   border-bottom: none;
 }
 
+/* column hints – table-layout: fixed uses these as proportions */
+
 .col-filename {
-  width: 34%;
+  width: 32%;
 }
 
 .col-score-number {
-  width: 8%;
+  width: 10%;
 }
 
 .col-score-label {
@@ -378,12 +380,14 @@ button {
 
 .col-metric {
   width: 14%;
-  white-space: normal;  /* allow wrapping so more fits on screen */
 }
+
+/* filename bold */
 
 .filename-cell {
   font-family: "Segoe UI", system-ui, sans-serif;
   font-size: 0.8rem;
+  font-weight: 600;
 }
 
 /* Row interactions */
@@ -393,7 +397,7 @@ button {
   transition: background var(--transition-fast);
 }
 
-/* remove bottom border so the explanation row visually connects */
+/* remove bottom border so explanation row visually connects */
 
 .clickable-row td {
   border-bottom: none;
@@ -460,7 +464,7 @@ button {
   color: #b91c1c;
 }
 
-/* Explanation rows - a bit more emphasis, clearly tied to score row */
+/* Explanation rows – highlighted and visually tied to score row */
 
 .explanation-row td {
   background: #fff7ed;                           /* soft orange band */
@@ -609,5 +613,5 @@ button {
 
 .detail-value {
   font-size: 0.86rem;
-  color: var(--color-text);
+  color: #111827;
 }
