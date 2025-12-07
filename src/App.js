@@ -9,6 +9,7 @@ function App() {
   const [error, setError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [selectedSong, setSelectedSong] = useState(null);
+  const [authHeader, setAuthHeader] = useState(null); // cached Basic Auth header
 
   const handleFileChange = (event) => {
     const selectedFiles = Array.from(event.target.files || []);
@@ -29,8 +30,22 @@ function App() {
       return;
     }
 
-    setLoading(true);
     setError("");
+
+    // Ask for password once per page load
+    let header = authHeader;
+    if (!header) {
+      const password = window.prompt("Enter Lyric Coach Analyzer password:");
+      if (!password) {
+        setStatusMessage("Upload cancelled.");
+        return;
+      }
+      const username = "singfit"; // must match BASIC_AUTH_USERNAME on the server
+      header = "Basic " + btoa(`${username}:${password}`);
+      setAuthHeader(header);
+    }
+
+    setLoading(true);
     setStatusMessage("Uploading and analyzing songs. Please wait...");
     setSelectedSong(null);
 
@@ -43,9 +58,17 @@ function App() {
       const response = await fetch(`${config.API_BASE_URL}/analyze-upload`, {
         method: "POST",
         body: formData,
+        headers: {
+          Authorization: header,
+        },
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Auth failed: clear cached header so we re-prompt next time
+          setAuthHeader(null);
+          throw new Error("Unauthorized. Check your password and try again.");
+        }
         throw new Error(`Server responded with status ${response.status}`);
       }
 
@@ -222,7 +245,6 @@ function App() {
       <header className="top-bar">
         <div className="top-bar-inner">
           <div className="brand">
-            {/* Put your logo file at public/logo.png or change the src */}
             <img
               src="/logo.png"
               alt="Company logo"
@@ -235,9 +257,7 @@ function App() {
               </p>
             </div>
           </div>
-          <div className="app-tag">
-            Internal tool
-          </div>
+          <div className="app-tag">Internal tool</div>
         </div>
       </header>
 
@@ -246,7 +266,7 @@ function App() {
           <section className="panel upload-panel">
             <h2 className="panel-title">1. Select audio files</h2>
             <p className="hint">
-              Choose one or many MP3, WAV, M4A, or FLAC files.  
+              Choose one or many MP3, WAV, M4A, or FLAC files.{" "}
               They will be scored using your Lyric Coach model.
             </p>
 
@@ -293,13 +313,14 @@ function App() {
 
             {!results.length && (
               <p className="hint">
-                After you upload songs, results will appear here with scores and key metrics.  
+                After you upload songs, results will appear here with scores and key metrics.{" "}
                 Click a row to open a detailed metrics panel.
               </p>
             )}
 
             {results.length > 0 && (
               <React.Fragment>
+                {/* Score legend moved into Results section */}
                 <div className="legend results-legend">
                   <span className="legend-label">Score legend</span>
                   <span className="legend-pill legend-strong">
@@ -387,7 +408,7 @@ function App() {
                   </table>
 
                   <div className="results-note">
-                    Scores are based on vocal phrase structure and your calibrated rules.  
+                    Scores are based on vocal phrase structure and your calibrated rules.{" "}
                     Click any row to see detailed phrase and gap metrics.
                   </div>
                 </div>
