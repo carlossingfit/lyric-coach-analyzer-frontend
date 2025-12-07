@@ -105,8 +105,9 @@ function App() {
     }
   };
 
+  // Shorter labels to keep the table visually balanced
   const scoreToLabel = (score) => {
-    if (score === 3) return "Strong candidate";
+    if (score === 3) return "Strong";
     if (score === 2) return "Maybe";
     if (score === 1) return "Probably not";
     return "Unknown";
@@ -319,8 +320,7 @@ function App() {
             )}
 
             {results.length > 0 && (
-              <React.Fragment>
-                {/* Score legend moved into Results section */}
+              <>
                 <div className="legend results-legend">
                   <span className="legend-label">Score legend</span>
                   <span className="legend-pill legend-strong">
@@ -394,7 +394,7 @@ function App() {
                             >
                               <td colSpan={6}>
                                 <div className="row-explanation-label">
-                                  Score explanation
+                                  Score explanation for this song
                                 </div>
                                 <div className="row-explanation-text">
                                   {item.explanation}
@@ -408,15 +408,25 @@ function App() {
                   </table>
 
                   <div className="results-note">
+                    <strong>General note:</strong>{" "}
                     Scores are based on vocal phrase structure and your calibrated rules.{" "}
                     Click any row to see detailed phrase and gap metrics.
                   </div>
                 </div>
-              </React.Fragment>
+              </>
             )}
           </section>
         </div>
       </main>
+
+      <footer className="app-footer">
+        <div className="app-footer-inner">
+          <span>© 2025 Musical Health Technologies. All rights reserved.</span>
+          <span className="app-footer-meta">
+            Lyric Coach Analyzer · Internal use only · v1.0
+          </span>
+        </div>
+      </footer>
 
       {selectedSong && (
         <div className="modal-backdrop" onClick={handleCloseModal}>
