@@ -273,6 +273,205 @@ function App() {
     return `${(Number(value) * 100).toFixed(0)}%`;
   };
 
+  // Generate song specific insight bullets based on real metrics
+  const generateInsightBullets = (song) => {
+    if (!song) return [];
+    const bullets = [];
+
+    const cov = song.promptable_phrase_coverage;
+    const gaps = song.comfortable_gaps_per_minute;
+    const density = song.usable_density;
+    const ppm = song.promptable_phrases_per_minute;
+
+    if (cov !== null && cov !== undefined && !Number.isNaN(cov)) {
+      const pct = (cov * 100).toFixed(0);
+      if (cov >= 0.55) {
+        bullets.push(
+          `Promptable phrase coverage is high at about ${pct} percent of the song.`
+        );
+      } else if (cov >= 0.35) {
+        bullets.push(
+          `Promptable phrase coverage is moderate at around ${pct} percent.`
+        );
+      } else {
+        bullets.push(
+          `Promptable phrase coverage is relatively low at about ${pct} percent.`
+        );
+      }
+    }
+
+    if (gaps !== null && gaps !== undefined && !Number.isNaN(gaps)) {
+      if (gaps >= 1.6) {
+        bullets.push(
+          `Comfortable gaps appear fairly often at roughly ${gaps.toFixed(
+            1
+          )} per minute.`
+        );
+      } else if (gaps >= 0.8) {
+        bullets.push(
+          `Comfortable gaps are present but not frequent at about ${gaps.toFixed(
+            1
+          )} per minute.`
+        );
+      } else {
+        bullets.push(
+          `Comfortable gaps are scarce at roughly ${gaps.toFixed(
+            1
+          )} per minute.`
+        );
+      }
+    }
+
+    if (ppm !== null && ppm !== undefined && !Number.isNaN(ppm)) {
+      if (ppm >= 6) {
+        bullets.push(
+          `Promptable phrases per minute are high at about ${ppm.toFixed(
+            1
+          )}, which increases opportunity.`
+        );
+      } else if (ppm >= 3) {
+        bullets.push(
+          `Promptable phrases per minute are in a middle range at about ${ppm.toFixed(
+            1
+          )}.`
+        );
+      } else {
+        bullets.push(
+          `Promptable phrases per minute are on the low side at about ${ppm.toFixed(
+            1
+          )}.`
+        );
+      }
+    }
+
+    if (density !== null && density !== undefined && !Number.isNaN(density)) {
+      if (density >= 0.75) {
+        bullets.push(
+          `Usable density is strong, indicating a good balance of phrases and gaps.`
+        );
+      } else if (density >= 0.5) {
+        bullets.push(
+          `Usable density is moderate, which can support some prompting.`
+        );
+      } else {
+        bullets.push(
+          `Usable density is relatively low, which limits how often prompts can fit.`
+        );
+      }
+    }
+
+    // Keep it concise
+    return bullets.slice(0, 3);
+  };
+
+  // Pick one metric as the deciding factor relative to a simple reference band
+  const getDecidingFactor = (song) => {
+    if (!song) return null;
+
+    const candidates = [];
+
+    const cov = song.promptable_phrase_coverage;
+    if (cov !== null && cov !== undefined && !Number.isNaN(cov)) {
+      candidates.push({
+        key: "coverage",
+        value: cov,
+        target: 0.45,
+      });
+    }
+
+    const gaps = song.comfortable_gaps_per_minute;
+    if (gaps !== null && gaps !== undefined && !Number.isNaN(gaps)) {
+      candidates.push({
+        key: "gaps",
+        value: gaps,
+        target: 1.2,
+      });
+    }
+
+    const density = song.usable_density;
+    if (density !== null && density !== undefined && !Number.isNaN(density)) {
+      candidates.push({
+        key: "density",
+        value: density,
+        target: 0.7,
+      });
+    }
+
+    const ppm = song.promptable_phrases_per_minute;
+    if (ppm !== null && ppm !== undefined && !Number.isNaN(ppm)) {
+      candidates.push({
+        key: "ppm",
+        value: ppm,
+        target: 5.0,
+      });
+    }
+
+    if (!candidates.length) return null;
+
+    // Find the metric that deviates most from its reference target
+    let best = candidates[0];
+    let bestDiff = Math.abs(best.value - best.target);
+
+    for (let i = 1; i < candidates.length; i += 1) {
+      const diff = Math.abs(candidates[i].value - candidates[i].target);
+      if (diff > bestDiff) {
+        best = candidates[i];
+        bestDiff = diff;
+      }
+    }
+
+    const isAbove = best.value >= best.target;
+
+    // Turn that into a short phrase; positive vs limiting wording
+    if (best.key === "coverage") {
+      const pct = (best.value * 100).toFixed(0);
+      if (isAbove) {
+        return `strong promptable phrase coverage at about ${pct} percent of the song, which supports this score.`;
+      }
+      return `lower promptable phrase coverage at about ${pct} percent of the song, which limits how high this song can score.`;
+    }
+
+    if (best.key === "gaps") {
+      if (isAbove) {
+        return `a relatively high rate of comfortable gaps at about ${best.value.toFixed(
+          1
+        )} per minute, which creates more workable moments.`;
+      }
+      return `a relatively low rate of comfortable gaps at about ${best.value.toFixed(
+        1
+      )} per minute, which limits the number of workable moments.`;
+    }
+
+    if (best.key === "density") {
+      if (isAbove) {
+        return `strong usable density around ${best.value.toFixed(
+          2
+        )}, indicating many workable spots for prompts.`;
+      }
+      return `lower usable density around ${best.value.toFixed(
+        2
+      )}, which reduces how often prompts can comfortably fit.`;
+    }
+
+    if (best.key === "ppm") {
+      if (isAbove) {
+        return `a higher than usual number of promptable phrases per minute at about ${best.value.toFixed(
+          1
+        )}, which supports this score.`;
+      }
+      return `a lower than usual number of promptable phrases per minute at about ${best.value.toFixed(
+        1
+      )}, which limits how high this song can score.`;
+    }
+
+    return null;
+  };
+
+  const insightBullets = selectedSong
+    ? generateInsightBullets(selectedSong)
+    : [];
+  const decidingFactor = selectedSong ? getDecidingFactor(selectedSong) : null;
+
   return (
     <div className="app-root">
       <header className="top-bar">
@@ -357,7 +556,7 @@ function App() {
               <p className="hint">
                 After you upload songs, results will appear here with scores and key metrics.{" "}
                 You can also load a demo result to see how the analyzer works.{" "}
-                Click a row to open a detailed metrics panel.
+                Click a row to open a detailed explanation and full metrics.
               </p>
             )}
 
@@ -390,69 +589,54 @@ function App() {
                     </thead>
                     <tbody>
                       {results.map((item, index) => (
-                        <React.Fragment key={index}>
-                          <tr
-                            className="clickable-row"
-                            onClick={() => handleRowClick(item)}
-                          >
-                            <td className="filename-cell">{item.filename}</td>
-                            <td className="score-number-cell">
-                              {item.score != null ? (
-                                <span className={scoreNumberClass(item.score)}>
-                                  {item.score}
-                                </span>
-                              ) : (
-                                "?"
-                              )}
-                            </td>
-                            <td>
-                              <span className={scoreToClass(item.score)}>
-                                {scoreToLabel(item.score)}
+                        <tr
+                          key={index}
+                          className="clickable-row"
+                          onClick={() => handleRowClick(item)}
+                        >
+                          <td className="filename-cell">{item.filename}</td>
+                          <td className="score-number-cell">
+                            {item.score != null ? (
+                              <span className={scoreNumberClass(item.score)}>
+                                {item.score}
                               </span>
-                            </td>
-                            <td>
-                              {item.promptable_phrases_per_minute !== undefined
-                                ? item.promptable_phrases_per_minute.toFixed(2)
-                                : "n/a"}
-                            </td>
-                            <td>
-                              {item.promptable_phrase_coverage !== undefined
-                                ? formatCoveragePercent(
-                                    item.promptable_phrase_coverage
-                                  )
-                                : "n/a"}
-                            </td>
-                            <td>
-                              {item.comfortable_gaps_per_minute !== undefined
-                                ? item.comfortable_gaps_per_minute.toFixed(2)
-                                : "n/a"}
-                            </td>
-                          </tr>
-
-                          {item.explanation && (
-                            <tr
-                              className="explanation-row"
-                              onClick={() => handleRowClick(item)}
-                            >
-                              <td colSpan={6}>
-                                <div className="row-explanation-label">
-                                  Score explanation for this song
-                                </div>
-                                <div className="row-explanation-text">
-                                  {item.explanation}
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
+                            ) : (
+                              "?"
+                            )}
+                          </td>
+                          <td>
+                            <span className={scoreToClass(item.score)}>
+                              {scoreToLabel(item.score)}
+                            </span>
+                          </td>
+                          <td>
+                            {item.promptable_phrases_per_minute !== undefined
+                              ? item.promptable_phrases_per_minute.toFixed(2)
+                              : "n/a"}
+                          </td>
+                          <td>
+                            {item.promptable_phrase_coverage !== undefined
+                              ? formatCoveragePercent(
+                                  item.promptable_phrase_coverage
+                                )
+                              : "n/a"}
+                          </td>
+                          <td>
+                            {item.comfortable_gaps_per_minute !== undefined
+                              ? item.comfortable_gaps_per_minute.toFixed(2)
+                              : "n/a"}
+                          </td>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
 
                   <div className="results-note">
                     <strong>General note:</strong>{" "}
-                    Scores are based on vocal phrase structure and your calibrated rules.{" "}
-                    Click any row to see detailed phrase and gap metrics.
+                    The metrics in this table are summaries. The analyzer also looks at
+                    timing patterns and other details not shown here, so songs with
+                    similar numbers can still receive different scores. Click a row
+                    to see a song specific explanation.
                   </div>
                 </div>
               </>
@@ -495,10 +679,31 @@ function App() {
             </div>
 
             <div className="modal-body">
+              {/* Deciding factor line */}
+              {decidingFactor && (
+                <div className="modal-deciding-factor">
+                  <strong>Deciding factor: </strong>
+                  {decidingFactor}
+                </div>
+              )}
+
+              {/* Song specific bullets based on metrics */}
+              {insightBullets.length > 0 && (
+                <div className="modal-insights">
+                  <div className="detail-label">
+                    Why this song received this score
+                  </div>
+                  <ul className="modal-insight-list">
+                    {insightBullets.map((text, idx) => (
+                      <li key={idx}>{text}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Original free text explanation from the model */}
               {selectedSong.explanation && (
-                <p className="modal-explanation">
-                  {selectedSong.explanation}
-                </p>
+                <p className="modal-explanation">{selectedSong.explanation}</p>
               )}
 
               <div className="detail-grid">
