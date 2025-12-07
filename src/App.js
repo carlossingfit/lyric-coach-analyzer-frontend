@@ -2,6 +2,29 @@ import React, { useState } from "react";
 import "./App.css";
 import config from "./config";
 
+// Demo results so users can see how the tool works without uploading audio
+const DEMO_RESULTS = [
+  {
+    filename: "DEMO - Sample Song_vocals.wav",
+    score: 3,
+    explanation:
+      "Example only: Vocal phrasing includes multiple short phrases with frequent workable gaps, providing several spots where spoken lyric prompts can fit comfortably.",
+    song_minutes: 3.25,
+    duration_seconds: 195,
+    total_phrases: 78,
+    num_promptable_phrases: 24,
+    near_promptable_phrases: 16,
+    promptable_phrases_per_minute: 7.4,
+    near_promptable_phrases_per_minute: 4.9,
+    promptable_phrase_coverage: 0.52,
+    comfortable_gaps_per_minute: 1.3,
+    comfortable_gap_coverage: 0.34,
+    total_gaps_per_minute: 3.2,
+    avg_phrase_duration_sec: 1.8,
+    usable_density: 0.73,
+  },
+];
+
 function App() {
   const [files, setFiles] = useState([]);
   const [results, setResults] = useState([]);
@@ -225,6 +248,15 @@ function App() {
     setSelectedSong(null);
   };
 
+  // New: load the demo results without hitting the backend
+  const handleLoadDemo = () => {
+    setFiles([]);
+    setError("");
+    setSelectedSong(null);
+    setResults(DEMO_RESULTS);
+    setStatusMessage("Showing demo results (no files uploaded).");
+  };
+
   const formatSeconds = (sec) => {
     if (sec === null || sec === undefined || Number.isNaN(sec)) return "";
     const total = Number(sec);
@@ -301,20 +333,30 @@ function App() {
           <section className="panel results-panel">
             <div className="results-header-row">
               <h2 className="panel-title">2. Results</h2>
-              {results.length > 0 && (
+              <div className="results-header-actions">
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={handleDownloadCSV}
+                  onClick={handleLoadDemo}
                 >
-                  Download CSV
+                  Load demo
                 </button>
-              )}
+                {results.length > 0 && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={handleDownloadCSV}
+                  >
+                    Download CSV
+                  </button>
+                )}
+              </div>
             </div>
 
             {!results.length && (
               <p className="hint">
                 After you upload songs, results will appear here with scores and key metrics.{" "}
+                You can also load a demo result to see how the analyzer works.{" "}
                 Click a row to open a detailed metrics panel.
               </p>
             )}

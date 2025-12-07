@@ -273,6 +273,13 @@ body,
   margin-bottom: 0.4rem;
 }
 
+.results-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
 .legend {
   margin: 0.5rem 0 0.7rem;
   padding: 0.45rem 0.6rem;
