@@ -299,11 +299,14 @@ body {
 
 .results-table-wrapper {
   width: 100%;
-  overflow-x: auto;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .results-table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   font-size: 0.8rem;
 }
@@ -627,8 +630,13 @@ body {
 @media (max-width: 960px) {
   .app-container {
     grid-template-columns: minmax(0, 1fr);
+    .results-table-wrapper {
+    overflow-x: auto;
   }
-
+  }
+.results-table {
+    min-width: 760px;
+  }
   .results-panel {
     order: 2;
   }

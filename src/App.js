@@ -25,6 +25,52 @@ const DEMO_RESULTS = [
   },
 ];
 
+// Simple heuristics to detect "full track uploaded" scenarios
+const looksLikeFullTrackError = (text) => {
+  if (!text) return false;
+  const t = String(text).toLowerCase();
+  return (
+    t.includes("full track") ||
+    t.includes("full-track") ||
+    t.includes("full mix") ||
+    t.includes("full-mix") ||
+    t.includes("mix") ||
+    t.includes("instrumental") ||
+    t.includes("backing track") ||
+    t.includes("stereo") ||
+    t.includes("not acapella") ||
+    t.includes("not a cappella") ||
+    t.includes("acapella only") ||
+    t.includes("a cappella only") ||
+    t.includes("vocals only") ||
+    t.includes("vocal only")
+  );
+};
+
+const ACAPELLA_ONLY_MESSAGE =
+  "This analyzer only supports acapella (vocal-only) files. Full songs with instrumentation will return incomplete results. Please upload an acapella stem (for example, a file ending in _vocals.wav).";
+
+const itemLooksLikeFullTrackResult = (item) => {
+  // If the score is missing or non-numeric AND key metrics are missing, treat as a likely full track
+  const scoreIsNumeric = typeof item.score === "number" && !Number.isNaN(item.score);
+
+  // "Key table metrics" used in your results grid:
+  const hasKeyMetrics =
+    item.promptable_phrases_per_minute !== undefined ||
+    item.promptable_phrase_coverage !== undefined ||
+    item.comfortable_gaps_per_minute !== undefined;
+
+  // If it looks like "Unknown" behavior: score missing/invalid AND no key metrics
+  if (!scoreIsNumeric && !hasKeyMetrics) return true;
+
+  // Also catch explicit "Unknown" label if backend ever sends it as a string
+  if (typeof item.score === "string" && item.score.toLowerCase() === "unknown" && !hasKeyMetrics) {
+    return true;
+  }
+
+  return false;
+};
+
 function App() {
   const [files, setFiles] = useState([]);
   const [results, setResults] = useState([]);
@@ -97,10 +143,18 @@ function App() {
 
       const data = await response.json();
 
+      // If backend returned an error string, inspect it
       if (data.error) {
-        setError(data.error);
+        if (looksLikeFullTrackError(data.error)) {
+          setError(ACAPELLA_ONLY_MESSAGE);
+        } else {
+          setError(data.error);
+        }
         setResults([]);
-      } else if (Array.isArray(data.results)) {
+        return;
+      }
+
+      if (Array.isArray(data.results)) {
         const normalizedResults = data.results.map((item) => {
           const metrics = item.metrics || {};
           const songMinutes = metrics.song_minutes;
@@ -113,6 +167,16 @@ function App() {
             duration_seconds: durationSeconds,
           };
         });
+
+        // If results imply a full track upload, show an error instead of Unknown/n.a
+        const likelyFullTrack = normalizedResults.some(itemLooksLikeFullTrackResult);
+
+        if (likelyFullTrack) {
+          setError(ACAPELLA_ONLY_MESSAGE);
+          setResults([]);
+          setStatusMessage("");
+          return;
+        }
 
         setResults(normalizedResults);
         setStatusMessage(`Processed ${normalizedResults.length} file(s).`);
@@ -189,9 +253,7 @@ function App() {
       scoreToLabel(item.score),
       item.explanation ?? "",
       item.song_minutes !== undefined ? item.song_minutes.toFixed(3) : "",
-      item.duration_seconds !== undefined
-        ? item.duration_seconds.toFixed(3)
-        : "",
+      item.duration_seconds !== undefined ? item.duration_seconds.toFixed(3) : "",
       item.total_phrases ?? "",
       item.num_promptable_phrases ?? "",
       item.near_promptable_phrases ?? "",
@@ -216,9 +278,7 @@ function App() {
       item.avg_phrase_duration_sec !== undefined
         ? item.avg_phrase_duration_sec.toFixed(4)
         : "",
-      item.usable_density !== undefined
-        ? item.usable_density.toFixed(4)
-        : "",
+      item.usable_density !== undefined ? item.usable_density.toFixed(4) : "",
     ]);
 
     const csvLines = [
@@ -303,21 +363,15 @@ function App() {
     if (gaps !== null && gaps !== undefined && !Number.isNaN(gaps)) {
       if (gaps >= 1.6) {
         bullets.push(
-          `Comfortable gaps appear fairly often at roughly ${gaps.toFixed(
-            1
-          )} per minute.`
+          `Comfortable gaps appear fairly often at roughly ${gaps.toFixed(1)} per minute.`
         );
       } else if (gaps >= 0.8) {
         bullets.push(
-          `Comfortable gaps are present but not frequent at about ${gaps.toFixed(
-            1
-          )} per minute.`
+          `Comfortable gaps are present but not frequent at about ${gaps.toFixed(1)} per minute.`
         );
       } else {
         bullets.push(
-          `Comfortable gaps are scarce at roughly ${gaps.toFixed(
-            1
-          )} per minute.`
+          `Comfortable gaps are scarce at roughly ${gaps.toFixed(1)} per minute.`
         );
       }
     }
@@ -325,21 +379,15 @@ function App() {
     if (ppm !== null && ppm !== undefined && !Number.isNaN(ppm)) {
       if (ppm >= 6) {
         bullets.push(
-          `Promptable phrases per minute are high at about ${ppm.toFixed(
-            1
-          )}, which increases opportunity.`
+          `Promptable phrases per minute are high at about ${ppm.toFixed(1)}, which increases opportunity.`
         );
       } else if (ppm >= 3) {
         bullets.push(
-          `Promptable phrases per minute are in a middle range at about ${ppm.toFixed(
-            1
-          )}.`
+          `Promptable phrases per minute are in a middle range at about ${ppm.toFixed(1)}.`
         );
       } else {
         bullets.push(
-          `Promptable phrases per minute are on the low side at about ${ppm.toFixed(
-            1
-          )}.`
+          `Promptable phrases per minute are on the low side at about ${ppm.toFixed(1)}.`
         );
       }
     }
@@ -372,38 +420,22 @@ function App() {
 
     const cov = song.promptable_phrase_coverage;
     if (cov !== null && cov !== undefined && !Number.isNaN(cov)) {
-      candidates.push({
-        key: "coverage",
-        value: cov,
-        target: 0.45,
-      });
+      candidates.push({ key: "coverage", value: cov, target: 0.45 });
     }
 
     const gaps = song.comfortable_gaps_per_minute;
     if (gaps !== null && gaps !== undefined && !Number.isNaN(gaps)) {
-      candidates.push({
-        key: "gaps",
-        value: gaps,
-        target: 1.2,
-      });
+      candidates.push({ key: "gaps", value: gaps, target: 1.2 });
     }
 
     const density = song.usable_density;
     if (density !== null && density !== undefined && !Number.isNaN(density)) {
-      candidates.push({
-        key: "density",
-        value: density,
-        target: 0.7,
-      });
+      candidates.push({ key: "density", value: density, target: 0.7 });
     }
 
     const ppm = song.promptable_phrases_per_minute;
     if (ppm !== null && ppm !== undefined && !Number.isNaN(ppm)) {
-      candidates.push({
-        key: "ppm",
-        value: ppm,
-        target: 5.0,
-      });
+      candidates.push({ key: "ppm", value: ppm, target: 5.0 });
     }
 
     if (!candidates.length) return null;
@@ -422,7 +454,6 @@ function App() {
 
     const isAbove = best.value >= best.target;
 
-    // Turn that into a short phrase; positive vs limiting wording
     if (best.key === "coverage") {
       const pct = (best.value * 100).toFixed(0);
       if (isAbove) {
@@ -467,9 +498,7 @@ function App() {
     return null;
   };
 
-  const insightBullets = selectedSong
-    ? generateInsightBullets(selectedSong)
-    : [];
+  const insightBullets = selectedSong ? generateInsightBullets(selectedSong) : [];
   const decidingFactor = selectedSong ? getDecidingFactor(selectedSong) : null;
 
   return (
@@ -477,11 +506,7 @@ function App() {
       <header className="top-bar">
         <div className="top-bar-inner">
           <div className="brand">
-            <img
-              src="/logo.png"
-              alt="Company logo"
-              className="brand-logo"
-            />
+            <img src="/logo.png" alt="Company logo" className="brand-logo" />
             <div className="brand-text">
               <h1 className="app-title">Lyric Coach Analyzer</h1>
               <p className="subtitle">
@@ -498,8 +523,9 @@ function App() {
           <section className="panel upload-panel">
             <h2 className="panel-title">1. Select audio files</h2>
             <p className="hint">
-              Choose one or many MP3, WAV, M4A, or FLAC files.{" "}
-              They will be scored using your Lyric Coach model.
+              Supported formats: MP3, WAV, M4A, and FLAC.{" "}
+              <strong>Acapella (vocal only) files are required.</strong>{" "}
+              Full tracks with instrumentation are not supported.
             </p>
 
             <label className="file-input-label">
@@ -522,10 +548,7 @@ function App() {
               </button>
             </div>
 
-            {statusMessage && (
-              <div className="status status-info">{statusMessage}</div>
-            )}
-
+            {statusMessage && <div className="status status-info">{statusMessage}</div>}
             {error && <div className="status status-error">{error}</div>}
           </section>
 
@@ -564,15 +587,9 @@ function App() {
               <>
                 <div className="legend results-legend">
                   <span className="legend-label">Score legend</span>
-                  <span className="legend-pill legend-strong">
-                    3 Strong candidate
-                  </span>
-                  <span className="legend-pill legend-maybe">
-                    2 Maybe
-                  </span>
-                  <span className="legend-pill legend-weak">
-                    1 Probably not
-                  </span>
+                  <span className="legend-pill legend-strong">3 Strong candidate</span>
+                  <span className="legend-pill legend-maybe">2 Maybe</span>
+                  <span className="legend-pill legend-weak">1 Probably not</span>
                 </div>
 
                 <div className="results-table-wrapper">
@@ -597,17 +614,13 @@ function App() {
                           <td className="filename-cell">{item.filename}</td>
                           <td className="score-number-cell">
                             {item.score != null ? (
-                              <span className={scoreNumberClass(item.score)}>
-                                {item.score}
-                              </span>
+                              <span className={scoreNumberClass(item.score)}>{item.score}</span>
                             ) : (
                               "?"
                             )}
                           </td>
                           <td>
-                            <span className={scoreToClass(item.score)}>
-                              {scoreToLabel(item.score)}
-                            </span>
+                            <span className={scoreToClass(item.score)}>{scoreToLabel(item.score)}</span>
                           </td>
                           <td>
                             {item.promptable_phrases_per_minute !== undefined
@@ -616,9 +629,7 @@ function App() {
                           </td>
                           <td>
                             {item.promptable_phrase_coverage !== undefined
-                              ? formatCoveragePercent(
-                                  item.promptable_phrase_coverage
-                                )
+                              ? formatCoveragePercent(item.promptable_phrase_coverage)
                               : "n/a"}
                           </td>
                           <td>
@@ -633,10 +644,7 @@ function App() {
 
                   <div className="results-note">
                     <strong>General note:</strong>{" "}
-                    The metrics in this table are summaries. The analyzer also looks at
-                    timing patterns and other details not shown here, so songs with
-                    similar numbers can still receive different scores. Click a row
-                    to see a song specific explanation.
+                    The metrics in this table are summaries. The analyzer also looks at timing patterns and other details not shown here, so songs with similar numbers can still receive different scores. Click a row to see a song specific explanation.
                   </div>
                 </div>
               </>
@@ -664,22 +672,15 @@ function App() {
                   <span className={scoreToClass(selectedSong.score)}>
                     {scoreToLabel(selectedSong.score)}
                   </span>
-                  <span className="modal-score-text">
-                    Score {selectedSong.score}
-                  </span>
+                  <span className="modal-score-text">Score {selectedSong.score}</span>
                 </div>
               </div>
-              <button
-                className="modal-close"
-                type="button"
-                onClick={handleCloseModal}
-              >
+              <button className="modal-close" type="button" onClick={handleCloseModal}>
                 ✕
               </button>
             </div>
 
             <div className="modal-body">
-              {/* Deciding factor line */}
               {decidingFactor && (
                 <div className="modal-deciding-factor">
                   <strong>Deciding factor: </strong>
@@ -687,12 +688,9 @@ function App() {
                 </div>
               )}
 
-              {/* Song specific bullets based on metrics */}
               {insightBullets.length > 0 && (
                 <div className="modal-insights">
-                  <div className="detail-label">
-                    Why this song received this score
-                  </div>
+                  <div className="detail-label">Why this song received this score</div>
                   <ul className="modal-insight-list">
                     {insightBullets.map((text, idx) => (
                       <li key={idx}>{text}</li>
@@ -701,7 +699,6 @@ function App() {
                 </div>
               )}
 
-              {/* Original free text explanation from the model */}
               {selectedSong.explanation && (
                 <p className="modal-explanation">{selectedSong.explanation}</p>
               )}
@@ -728,33 +725,21 @@ function App() {
 
                 <div className="detail-item">
                   <div className="detail-label">Total phrases</div>
-                  <div className="detail-value">
-                    {selectedSong.total_phrases ?? "n/a"}
-                  </div>
+                  <div className="detail-value">{selectedSong.total_phrases ?? "n/a"}</div>
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">
-                    Promptable phrase count
-                  </div>
-                  <div className="detail-value">
-                    {selectedSong.num_promptable_phrases ?? "n/a"}
-                  </div>
+                  <div className="detail-label">Promptable phrase count</div>
+                  <div className="detail-value">{selectedSong.num_promptable_phrases ?? "n/a"}</div>
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">
-                    Near promptable phrase count
-                  </div>
-                  <div className="detail-value">
-                    {selectedSong.near_promptable_phrases ?? "n/a"}
-                  </div>
+                  <div className="detail-label">Near promptable phrase count</div>
+                  <div className="detail-value">{selectedSong.near_promptable_phrases ?? "n/a"}</div>
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">
-                    Promptable phrases per min
-                  </div>
+                  <div className="detail-label">Promptable phrases per min</div>
                   <div className="detail-value">
                     {selectedSong.promptable_phrases_per_minute !== undefined
                       ? selectedSong.promptable_phrases_per_minute.toFixed(2)
@@ -763,15 +748,10 @@ function App() {
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">
-                    Near promptable phrases per min
-                  </div>
+                  <div className="detail-label">Near promptable phrases per min</div>
                   <div className="detail-value">
-                    {selectedSong.near_promptable_phrases_per_minute !==
-                    undefined
-                      ? selectedSong.near_promptable_phrases_per_minute.toFixed(
-                          2
-                        )
+                    {selectedSong.near_promptable_phrases_per_minute !== undefined
+                      ? selectedSong.near_promptable_phrases_per_minute.toFixed(2)
                       : "n/a"}
                   </div>
                 </div>
@@ -780,9 +760,7 @@ function App() {
                   <div className="detail-label">Promptable coverage</div>
                   <div className="detail-value">
                     {selectedSong.promptable_phrase_coverage !== undefined
-                      ? formatCoveragePercent(
-                          selectedSong.promptable_phrase_coverage
-                        )
+                      ? formatCoveragePercent(selectedSong.promptable_phrase_coverage)
                       : "n/a"}
                   </div>
                 </div>
@@ -791,17 +769,13 @@ function App() {
                   <div className="detail-label">Avg phrase duration</div>
                   <div className="detail-value">
                     {selectedSong.avg_phrase_duration_sec !== undefined
-                      ? `${selectedSong.avg_phrase_duration_sec.toFixed(
-                          2
-                        )} sec`
+                      ? `${selectedSong.avg_phrase_duration_sec.toFixed(2)} sec`
                       : "n/a"}
                   </div>
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">
-                    Comfortable gaps per min
-                  </div>
+                  <div className="detail-label">Comfortable gaps per min</div>
                   <div className="detail-value">
                     {selectedSong.comfortable_gaps_per_minute !== undefined
                       ? selectedSong.comfortable_gaps_per_minute.toFixed(2)
@@ -819,14 +793,10 @@ function App() {
                 </div>
 
                 <div className="detail-item">
-                  <div className="detail-label">
-                    Comfortable gap coverage
-                  </div>
+                  <div className="detail-label">Comfortable gap coverage</div>
                   <div className="detail-value">
                     {selectedSong.comfortable_gap_coverage !== undefined
-                      ? formatCoveragePercent(
-                          selectedSong.comfortable_gap_coverage
-                        )
+                      ? formatCoveragePercent(selectedSong.comfortable_gap_coverage)
                       : "n/a"}
                   </div>
                 </div>
